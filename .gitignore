@@ -1,0 +1,14 @@
+# Secrets
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Data outputs
+data/results/
+data/images/
+
+# OS junk
+.DS_Store
+Thumbs.db

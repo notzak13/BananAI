@@ -1,0 +1,14 @@
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+yolo-env/
+
+# OS junk
+.DS_Store
+Thumbs.db
