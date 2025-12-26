@@ -1,0 +1,12 @@
+{
+    "order_id": "ORD-1225-2212",
+    "timestamp": "2025-12-25T22:12:12.522831",
+    "batch_id": "57244444",
+    "destination": "USA",
+    "weight_kg": 200.0,
+    "tier_sold": "STANDARD",
+    "unit_price": 1.25,
+    "total_revenue": 250.0,
+    "shipping_cost": 160.0,
+    "net_profit": 90.0
+}

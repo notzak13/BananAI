@@ -1,17 +1,32 @@
-def estimate_shelf_life(ripeness):
+def estimate_shelf_life(ripeness: str) -> int:
+    """Professional Logistics Shelf-Life Mapping."""
     return {
-        "green": 10,
-        "ripe": 5,
-        "overripe": 2
+        "unripe": 21,    # High export potential
+        "mid-ripe": 10,  # Regional transit
+        "ripe": 4        # Immediate local consumption
     }.get(ripeness, 0)
 
+def quality_score(length: float, confidence: float, ripeness: str) -> float:
+    """
+    Re-calibrated for real-world variance (0.26 - 0.74 range).
+    """
+    # Base from AI Confidence
+    score = (confidence or 0.8) * 0.3 
 
-def quality_score(length, confidence, ripeness):
-    score = confidence * 0.6
+    # 1. Size Grade (Adjusted thresholds)
+    if length > 20:       # Big bananas
+        score += 0.30
+    elif length >= 14:    # Standard bananas
+        score += 0.15
+    else:                 # Small/Discard
+        score -= 0.05
 
-    if length > 15:
-        score += 0.2
-    if ripeness == "ripe":
-        score += 0.2
+    # 2. Logistics Value
+    if ripeness == "unripe":
+        score += 0.20
+    elif ripeness == "mid-ripe":
+        score += 0.10
+    else:
+        score += 0.05
 
-    return round(min(score, 1.0), 2)
+    return round(max(0.1, min(score, 1.0)), 2)
