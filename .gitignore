@@ -12,3 +12,16 @@ data/images/
 # OS junk
 .DS_Store
 Thumbs.db
+# Python environment
+.venv/
+__pycache__/
+*.pyc
+
+# BananAI Data (Ignore the "noise")
+data/orders/
+data/batches/
+data/logs/
+*.json
+*.txt
+*.png
+*.jpg

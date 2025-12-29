@@ -1,25 +1,27 @@
-from typing import Dict, Any
+import time
 
 class BananaSample:
-    def __init__(self, banana: Any, timestamp: float = None):
-        self.banana = banana  # This is your BananaObject from CV
-        self.timestamp = timestamp
+    def __init__(self, banana, timestamp=None):
+        # banana can be the raw dict from detections
+        self.banana = banana 
+        self.timestamp = timestamp or time.time()
 
-    def to_dict(self) -> Dict:
+    def to_dict(self):
+        # If banana is an object, convert to dict, else keep as dict
+        b_data = self.banana
+        if hasattr(self.banana, 'to_dict'):
+            b_data = self.banana.to_dict()
+        elif hasattr(self.banana, '__dict__'):
+            b_data = self.banana.__dict__
+            
         return {
-            "banana": self.banana.to_dict() if hasattr(self.banana, 'to_dict') else str(self.banana),
+            "banana": b_data,
             "timestamp": self.timestamp
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'BananaSample':
-        """
-        The missing link! 
-        This allows the BatchRepository to rehydrate individual samples.
-        """
-        # We handle the 'banana' object differently depending on your CV setup
-        # For now, we'll store the raw data back into the sample
+    def from_dict(cls, data):
         return cls(
-            banana=data.get("banana"),
+            banana=data.get("banana", {}),
             timestamp=data.get("timestamp")
         )
