@@ -3,9 +3,7 @@ from src.services.economics_service import EconomicsService
 
 
 class SimulationService:
-    """
-    Runs large-scale shipment simulations based on sample batches.
-    """
+
 
     @staticmethod
     def simulate(batch, quantity: int) -> dict:
