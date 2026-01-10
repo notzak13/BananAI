@@ -1,30 +1,16 @@
 [
-    {
-        "order_id": "ORD-1229-1318",
-        "timestamp": "2025-12-29T13:18:35.529320",
-        "batch_id": "670b78d0",
-        "destination": "USA",
-        "weight_kg": 200.0,
-        "tier_sold": "STANDARD",
-        "unit_price": 1.97,
-        "total_revenue": 394.0,
-        "shipping_cost": 160.0,
-        "net_profit": 234.0,
-        "shipping_rate_kg": 0.8,
-        "quality_at_sale": 0.75
-    },
-    {
-        "order_id": "ORD-1229-1321",
-        "timestamp": "2025-12-29T13:21:34.211603",
-        "batch_id": "670b78d0",
-        "destination": "USA",
-        "weight_kg": 500.0,
-        "tier_sold": "PREMIUM",
-        "unit_price": 2.72,
-        "total_revenue": 1360.0,
-        "shipping_cost": 400.0,
-        "net_profit": 960.0,
-        "shipping_rate_kg": 0.8,
-        "quality_at_sale": 0.75
-    }
+  {
+    "order_id": "ORD-0110-1654",
+    "timestamp": "2026-01-10T16:54:43.647154",
+    "batch_id": "dcd3cd63",
+    "destination": "USA",
+    "weight_kg": 200.0,
+    "tier_sold": "PREMIUM",
+    "unit_price": 2.44,
+    "total_revenue": 488.0,
+    "shipping_cost": 160.0,
+    "net_profit": 328.0,
+    "shipping_rate_kg": 0.8,
+    "quality_at_sale": 0.61
+  }
 ]

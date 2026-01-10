@@ -8,6 +8,7 @@ from typing import List, Dict, Any, TYPE_CHECKING
 # Services & Pricing
 from src.services.shipping_service import ShippingService
 from src.services.pricing_strategy import PremiumPricing, EconomicPricing, StandardPricing
+from src.services.pricing_config_service import PricingConfigService
 
 if TYPE_CHECKING:
     from src.models.banana_batch import BananaBatch
@@ -33,12 +34,14 @@ class OrderController:
         for folder in [self.receipts_dir, self.ledger_dir, self.physical_dir]:
             folder.mkdir(parents=True, exist_ok=True)
         
-        self.base_price_per_kg = 1.35  # Adjusted for market inflation
+        # Use pricing config service
+        self.pricing_config = PricingConfigService()
+        self.base_price_per_kg = self.pricing_config.get_base_price()
         self.logger = logging.getLogger("OrderController")
 
     def get_proposals(self, destination: str, weight: float, tier: str) -> Dict[str, List[BananaBatch]]:
         """Matches destination transit requirements against batch shelf-life."""
-        transit_days, _ = ShippingService.get_route_info(destination)
+        transit_days, _ = ShippingService.get_route_info(destination, self.pricing_config)
         
         # Pull from inventory using refined logistics logic
         perfect, alternatives = self.inventory.get_recommendations(
@@ -48,17 +51,20 @@ class OrderController:
         )
         return {"perfect": perfect, "alternatives": alternatives}
 
-    def generate_invoice(self, batch: BananaBatch, weight: float, destination: str, tier: str) -> Dict[str, Any]:
+    def generate_invoice(self, batch: BananaBatch, weight: float, destination: str, tier: str, client_id: str = None) -> Dict[str, Any]:
         """Calculates dynamic pricing based on shipping floor + quality margin."""
-        _, ship_cost_kg = ShippingService.get_route_info(destination)
+        _, ship_cost_kg = ShippingService.get_route_info(destination, self.pricing_config)
         
-        # Strategy Pattern for Dynamic Pricing
+        # Update base price from config
+        self.base_price_per_kg = self.pricing_config.get_base_price()
+        
+        # Strategy Pattern for Dynamic Pricing (with config service)
         tier_map = {
-            "premium": PremiumPricing(), 
-            "economic": EconomicPricing(),
-            "standard": StandardPricing()
+            "premium": PremiumPricing(self.pricing_config), 
+            "economic": EconomicPricing(self.pricing_config),
+            "standard": StandardPricing(self.pricing_config)
         }
-        strategy = tier_map.get(tier.lower(), StandardPricing())
+        strategy = tier_map.get(tier.lower(), StandardPricing(self.pricing_config))
 
         # Logic: (Base * Quality) + Tier Margin + Shipping Cost
         unit_price = strategy.calculate_price(
@@ -71,7 +77,7 @@ class OrderController:
         shipping_total = weight * ship_cost_kg
         profit = revenue - shipping_total
 
-        return {
+        invoice = {
             "order_id": f"ORD-{datetime.now().strftime('%m%d-%H%M')}",
             "timestamp": datetime.now().isoformat(),
             "batch_id": batch.batch_id,
@@ -85,6 +91,11 @@ class OrderController:
             "shipping_rate_kg": ship_cost_kg,
             "quality_at_sale": batch.average_quality()
         }
+        
+        if client_id:
+            invoice["client_id"] = client_id
+        
+        return invoice
 
     def commit_transaction(self, invoice: Dict[str, Any], batch: BananaBatch) -> bool:
         """

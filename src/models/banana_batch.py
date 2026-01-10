@@ -80,24 +80,65 @@ class BananaBatch:
         return self._cached_quality
 
     def estimated_shelf_life_days(self) -> int:
-        """Calculates the 'Weakest Link' shelf life (minimum found)."""
-        if self._cached_life is not None: return self._cached_life
-        if not self.samples: return 0
-        
+        """
+        Calculates the shelf life.
+        PRIORITY: 1. Locked JSON Value > 2. Sample Extraction > 3. Fallback
+        """
+        # If we loaded from JSON, this will be set. We MUST trust it.
+        if self._cached_life is not None:
+            return int(self._cached_life)
+            
+        # If no cache, try to calculate from samples
         lives = []
         for s in self.samples:
-            val = self._extract(s.banana, ['shelf_life_days', 'days_left'])
+            source = s.banana if hasattr(s, 'banana') else s.get('banana', {})
+            val = self._extract(source, ['shelf_life_days', 'days_left'])
             if val is not None:
                 lives.append(int(val))
-            else:
-                # Intelligent Fallback: Only used if AI telemetry is missing
-                rip = self._extract(s.banana, ['ripeness'])
-                mapping = {"unripe": 21, "ripe": 4, "overripe": 1}
-                lives.append(mapping.get(str(rip).lower(), 7))
         
-        self._cached_life = min(lives) if lives else 0
-        return self._cached_life
+        if lives:
+            self._cached_life = min(lives)
+            return int(self._cached_life)
 
+        return 7 # Absolute floor if JSON and Samples are both missing data
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'BananaBatch':
+        """
+        REHYDRATION ENGINE: This is where we force the object to 
+        accept the JSON's real values.
+        """
+        batch = cls(
+            banana_type=data.get("banana_type", "Cavendish"),
+            batch_id=data.get("batch_id"),
+            total_weight_kg=float(data.get("total_weight_kg", 0.0)),
+            received_date=data.get("received_date")
+        )
+        batch.remaining_weight_kg = float(data.get("remaining_weight_kg", batch.total_weight_kg))
+        
+        # --- THE MASTER FIX ---
+        # Look specifically at the 'computed_stats' block in your JSON
+        stats = data.get("computed_stats", {})
+        
+        # We LOCK these values into the cache immediately.
+        # This prevents the 'ripeness mapping' from ever running.
+        if "shelf_life_days" in stats:
+            batch._cached_life = int(stats["shelf_life_days"])
+        
+        if "avg_quality" in stats:
+            batch._cached_quality = float(stats["avg_quality"])
+
+        # Reconstruct samples
+        if "samples" in data:
+            from .banana_sample import BananaSample
+            for s_data in data["samples"]:
+                try:
+                    batch.samples.append(BananaSample.from_dict(s_data))
+                except:
+                    batch.samples.append(s_data)
+                    
+        return batch
+    
     # --- SERIALIZATION ---
 
     def to_dict(self) -> dict:
