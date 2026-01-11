@@ -6,7 +6,6 @@ import sys
 import json
 from datetime import datetime
 
-# --- AUTOMATIC DEPENDENCY CHECK ---
 try:
     import plotly.express as px
     import plotly.graph_objects as go
@@ -26,7 +25,6 @@ from src.services.simulation_service import SimulationService
 from pathlib import Path
 import os
 
-# -- 1. SYSTEM INITIALIZATION --
 @st.cache_resource
 def load_engine():
     repo = BatchRepository()
@@ -37,7 +35,6 @@ def load_engine():
 
 st.set_page_config(page_title="BananAI | Global ERP", page_icon="🍌", layout="wide")
 
-# -- 2. THE "EMPIRE" STYLING (Glassmorphism & Gold Theme) --
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -46,12 +43,10 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
 
-    /* Main Background */
     .stApp {
         background: radial-gradient(circle at top right, #2a2a2a, #121212);
     }
 
-    /* Metric Cards Custom Look */
     div[data-testid="stMetric"] {
         background: rgba(252, 227, 3, 0.05);
         border: 1px solid rgba(252, 227, 3, 0.3);
@@ -67,7 +62,6 @@ st.markdown("""
         font-size: 0.8rem !important;
     }
 
-    /* Custom Container for Batches */
     .batch-card {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -81,7 +75,6 @@ st.markdown("""
         background: rgba(252, 227, 3, 0.02);
     }
 
-    /* Buttons */
     .stButton>button {
         background: linear-gradient(90deg, #fce303 0%, #e5cf02 100%);
         color: #1a1a1a !important;
@@ -98,13 +91,11 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(252, 227, 3, 0.4);
     }
 
-    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
         background-color: #1a1a1a !important;
         border-right: 1px solid rgba(252, 227, 3, 0.2);
     }
 
-    /* Pulsing Online Dot */
     .online-indicator {
         height: 10px;
         width: 10px;
@@ -123,7 +114,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# -- 3. HEADER & LOGO --
 col_logo, col_status = st.columns([4, 1])
 with col_logo:
     st.markdown("<h1 style='color: #fce303; margin-bottom: 0;'>BANANAI <span style='color: white; font-weight: 100;'>ENTERPRISE</span></h1>", unsafe_allow_html=True)
@@ -131,14 +121,12 @@ with col_logo:
 with col_status:
     st.markdown("<div style='text-align: right; padding-top: 25px;'><span class='online-indicator'></span><span style='color: #00ff00;'>CORE ENGINE LIVE</span></div>", unsafe_allow_html=True)
 
-# -- AUTHENTICATION CHECK --
 auth_service = AuthService()
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = None
 
-# Show login/register if not logged in
 if not st.session_state.logged_in:
     st.markdown("<div style='height: 150px;'></div>", unsafe_allow_html=True)
     auth_tab1, auth_tab2 = st.tabs(["🔐 LOGIN", "📝 REGISTER"])
@@ -172,7 +160,6 @@ if not st.session_state.logged_in:
                 st.error(message)
     st.stop()
 
-# User is logged in - show main interface
 st.sidebar.markdown(f"**Logged in as:** {st.session_state.username}")
 if st.sidebar.button("🚪 LOGOUT"):
     st.session_state.logged_in = False
@@ -187,11 +174,9 @@ page = st.sidebar.radio("COMMAND NAVIGATION", [
     "⚙️ ADMIN CONTROL"
 ])
 
-# -- 4. BUYER PORTAL (The "Global Market" View) --
 if page == "🌐 GLOBAL MARKET":
     controller = load_engine()
     
-    # Hero Section
     st.markdown("### 🌎 Global Export Fulfillment")
     
     c1, c2, c3 = st.columns([1, 1, 1])
@@ -213,7 +198,6 @@ if page == "🌐 GLOBAL MARKET":
         for b in matches:
             invoice = controller.generate_invoice(b, weight, dest, tier)
             
-            # Custom HTML Card
             with st.container():
                 st.markdown(f"""
                 <div class="batch-card">
@@ -230,7 +214,6 @@ if page == "🌐 GLOBAL MARKET":
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Action Buttons inside a Column (Streamlit components can't go in f-strings)
                 btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([2, 1, 1, 1.2])
                 with btn_col1:
                     st.progress(b.remaining_weight_kg / b.total_weight_kg if b.total_weight_kg > 0 else 0, text=f"Stock: {b.remaining_weight_kg:,.0f}kg left")
@@ -242,13 +225,11 @@ if page == "🌐 GLOBAL MARKET":
                             time.sleep(1)
                             st.rerun()
 
-# -- 5. ADMIN COMMAND CENTER (The "Financial Intelligence" View) --
 elif page == "📈 FINANCIAL INTELLIGENCE":
     controller = load_engine()
     summary = controller.get_financial_summary()
     history = controller._read_history()
 
-    # High-Level KPIs
     kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     kpi1.metric("GROSS REVENUE", f"${summary['revenue']:,.2f}", delta="Global Sales")
     kpi2.metric("NET PROFIT", f"${summary['profit']:,.2f}", delta="After Logistics")
@@ -256,20 +237,16 @@ elif page == "📈 FINANCIAL INTELLIGENCE":
     kpi3.metric("EFFICIENCY", f"{margin:.1f}%", delta="Margin")
     kpi4.metric("LOGISTICS", summary['orders'], delta="Shipments")
 
-    # Visual Intelligence Section
     if history:
         df = pd.DataFrame(history)
-        # Ensure timestamp is datetime for "Stocks" line chart
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         df = df.sort_values('timestamp')
-        # Calculate cumulative profit over time
         df['cumulative_profit'] = df['net_profit'].cumsum()
         
         st.markdown("---")
         chart_col, dist_col = st.columns([2, 1])
         
         with chart_col:
-            # Enhanced Sales Chart with Revenue and Profit
             fig_line = go.Figure()
             fig_line.add_trace(go.Scatter(
                 x=df['timestamp'], 
@@ -280,7 +257,7 @@ elif page == "📈 FINANCIAL INTELLIGENCE":
                 fill='tozeroy',
                 fillcolor='rgba(252, 227, 3, 0.1)'
             ))
-            # Add revenue line
+            
             df['cumulative_revenue'] = df['total_revenue'].cumsum()
             fig_line.add_trace(go.Scatter(
                 x=df['timestamp'],
@@ -303,7 +280,6 @@ elif page == "📈 FINANCIAL INTELLIGENCE":
             st.plotly_chart(fig_line, use_container_width=True)
         
         with dist_col:
-            # MARKET DISTRIBUTION SPREAD
             fig_sun = px.sunburst(
                 df, 
                 path=['destination', 'tier_sold'], 
@@ -315,7 +291,6 @@ elif page == "📈 FINANCIAL INTELLIGENCE":
             fig_sun.update_layout(paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig_sun, use_container_width=True)
 
-        # Operations Row
         st.markdown("---")
         ops_col1, ops_col2, ops_col3 = st.columns([1, 1, 1])
         with ops_col1:
@@ -341,7 +316,6 @@ elif page == "📈 FINANCIAL INTELLIGENCE":
         st.dataframe(df[display_cols].sort_values('timestamp', ascending=False), 
                      use_container_width=True)
 
-# -- 6. CLIENT REGISTRY VIEW --
 elif page == "👥 CLIENT REGISTRY":
     client_service = ClientService()
     controller = load_engine()
@@ -354,7 +328,6 @@ elif page == "👥 CLIENT REGISTRY":
     if not clients:
         st.info("No clients registered yet. Add clients in Admin Control.")
     else:
-        # Client selector
         client_options = {f"{c['name']} ({c['client_id']})": c['client_id'] for c in clients}
         selected_client_display = st.selectbox("Select Client", list(client_options.keys()))
         selected_client_id = client_options[selected_client_display]
@@ -386,7 +359,6 @@ elif page == "👥 CLIENT REGISTRY":
                 sales_df['timestamp'] = pd.to_datetime(sales_df['timestamp'])
                 sales_df = sales_df.sort_values('timestamp', ascending=False)
                 
-                # Display sales with banana images if available
                 for idx, sale in sales_df.iterrows():
                     with st.expander(f"Order {sale['order_id']} - {sale['timestamp'].strftime('%Y-%m-%d %H:%M')} - ${sale['net_profit']:,.2f}"):
                         col_img, col_info = st.columns([1, 2])
@@ -400,14 +372,11 @@ elif page == "👥 CLIENT REGISTRY":
                             batch_id = sale.get('batch_id', '')
                             results_dir = Path("data/results")
                             
-                            # Try to find an image that contains the batch ID in the filename
-                            # e.g., "batch_309ee39f_analysis.jpg"
                             image_files = list(results_dir.glob(f"*{batch_id}*.jpg"))
                             
                             if image_files:
                                 st.image(str(image_files[0]), caption=f"Batch {batch_id} Scan", width=300)
                             else:
-                                # Fallback to a placeholder or the first available image
                                 all_images = list(results_dir.glob("*.jpg"))
                                 if all_images:
                                     st.image(str(all_images[0]), caption="Representative Sample", width=300)
@@ -416,7 +385,6 @@ elif page == "👥 CLIENT REGISTRY":
             else:
                 st.info("No sales recorded for this client.")
 
-# -- 7. ADMIN CONTROL PANEL --
 elif page == "⚙️ ADMIN CONTROL":
     st.markdown("### ⚙️ Admin Control Panel")
     
@@ -427,12 +395,10 @@ elif page == "⚙️ ADMIN CONTROL":
     controller = load_engine()
     simulation_service = SimulationService()
     
-    # CLIENTS TAB
     with admin_tabs[0]:
         st.subheader("Client Management")
         crud_action = st.radio("Action", ["Create", "View/Edit", "Delete"], horizontal=True)
         
-        # Create
         if crud_action == "Create":
             with st.form("create_client"):
                 name = st.text_input("Client Name *")
@@ -443,7 +409,6 @@ elif page == "⚙️ ADMIN CONTROL":
                 submitted = st.form_submit_button("Create Client")
                 
                 if submitted:
-                    # MANUAL VALIDATION
                     if not name:
                         st.error("🛑 Error: Client Name is required!")
                     else:
@@ -490,7 +455,6 @@ elif page == "⚙️ ADMIN CONTROL":
             else:
                 st.info("No clients to delete.")
     
-    # PRICING TAB
     with admin_tabs[1]:
         st.subheader("Pricing Configuration")
         config = pricing_service.get_config()
@@ -537,7 +501,6 @@ elif page == "⚙️ ADMIN CONTROL":
                 time.sleep(1)
                 st.rerun()
     
-    # SALES TAB
     with admin_tabs[2]:
         st.subheader("Sales Management")
         history = controller._read_history()
@@ -546,7 +509,6 @@ elif page == "⚙️ ADMIN CONTROL":
             df = pd.DataFrame(history)
             df['timestamp'] = pd.to_datetime(df['timestamp'])
             
-            # Filter options
             col1, col2 = st.columns(2)
             with col1:
                 date_range = st.date_input("Date Range", 
@@ -557,7 +519,6 @@ elif page == "⚙️ ADMIN CONTROL":
                 tier_filter = st.multiselect("Filter by Tier", ["PREMIUM", "STANDARD", "ECONOMIC"], 
                                             default=["PREMIUM", "STANDARD", "ECONOMIC"])
             
-            # Apply filters
             filtered_df = df[df['tier_sold'].isin(tier_filter)]
             if len(date_range) == 2:
                 filtered_df = filtered_df[
@@ -569,7 +530,6 @@ elif page == "⚙️ ADMIN CONTROL":
                                       'weight_kg', 'total_revenue', 'net_profit']].sort_values('timestamp', ascending=False),
                         use_container_width=True)
             
-            # Edit/Delete sales
             st.markdown("### Edit/Delete Sale")
             sale_options = {f"{s['order_id']} - {s['timestamp'][:10]}": s['order_id'] for s in history}
             selected_sale = st.selectbox("Select Sale", list(sale_options.keys()))
@@ -589,7 +549,6 @@ elif page == "⚙️ ADMIN CONTROL":
         else:
             st.info("No sales recorded.")
     
-    # SHIPMENTS TAB
     with admin_tabs[3]:
         st.subheader("Shipment Management")
         history = controller._read_history()
@@ -602,7 +561,6 @@ elif page == "⚙️ ADMIN CONTROL":
                                       'shipping_cost', 'tier_sold']].sort_values('timestamp', ascending=False),
                         use_container_width=True)
             
-            # Shipment statistics
             st.markdown("### Shipment Statistics")
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -614,7 +572,6 @@ elif page == "⚙️ ADMIN CONTROL":
         else:
             st.info("No shipments recorded.")
     
-    # SIMULATION TAB
     with admin_tabs[4]:
         st.subheader("Historical Sales Simulation")
         st.markdown("Generate simulated sales data between 2026-02-01 and 2028-02-01")
@@ -626,7 +583,6 @@ elif page == "⚙️ ADMIN CONTROL":
             start_date = st.date_input("Start Date", value=datetime(2026, 2, 1).date())
             end_date = st.date_input("End Date", value=datetime(2028, 2, 1).date())
         
-        # Get client IDs for assignment
         clients = client_service.get_all_clients()
         client_ids = [c['client_id'] for c in clients] if clients else None
         
@@ -653,7 +609,6 @@ elif page == "⚙️ ADMIN CONTROL":
                     time.sleep(1)
                     st.rerun()
         
-        # Show simulation status
         history = controller._read_history()
         simulated_count = sum(1 for h in history if h.get('simulated', False))
         real_count = len(history) - simulated_count
